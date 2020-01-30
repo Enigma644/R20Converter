@@ -12,3 +12,4 @@ Once fully loaded, click "Download Module" and a .Module (zip) will be created. 
 * [JQuery](https://jquery.com/)
 * [JSZip](https://stuk.github.io/jszip/)
 * [JSZip FileSaver](https://github.com/eligrey/FileSaver.js)
+* [5e Tools](https://get.5e.tools/) - Download 5eTools.X.X.X.zip and look in \data\roll20-module\ for json files
