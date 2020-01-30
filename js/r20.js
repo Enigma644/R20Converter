@@ -167,6 +167,8 @@ function onReaderLoad(event){
       module.value+=moduleText;
     }
   }
+  
+  document.getElementById('downloadButton').style.display='block';
 }
 
 function urlToPromise(url) {
@@ -184,6 +186,8 @@ function urlToPromise(url) {
 
 function downloadModule(){
   console.log('Download');
+  document.getElementById('downloadButton').disabled='disabled';
+  document.getElementById('downloadButton').value='Please Wait...';
   var zipName = fileName.replace(/.json/,'')+'.module';
   var zip = new JSZip();
   var module = document.getElementById('module');
@@ -215,5 +219,7 @@ function downloadModule(){
   }  
   zip.generateAsync({type:'blob'}).then(function(content) {
     saveAs(content, zipName);
+    document.getElementById('downloadButton').value='Download Module';
+    document.getElementById('downloadButton').disabled='';
   });
 }

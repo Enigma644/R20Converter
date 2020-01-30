@@ -40,7 +40,7 @@
 </head>
 <body>
   <p>Select Roll 20 module json: <input id="JSONFile" type="file" class="btn-outline" name="Roll 20 JSON File"/></p>
-  <p><input type="button" value="Download Module" onClick="downloadModule();"/></p>
+  <p><input id="downloadButton" style="display:none;" type="button" value="Download Module" onClick="downloadModule();"/></p>
   <textarea id="module"></textarea>
   <div id="output"></div>
 </body>
