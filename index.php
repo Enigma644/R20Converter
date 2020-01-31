@@ -31,6 +31,10 @@
     #module {
       display:none;    
     }
+    .light {
+      border:1px dashed red;
+      border-radius: 45px;
+    }
   </style>
   <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
   <script type="text/javascript" src="js/jszip.min.js"></script>
@@ -39,7 +43,10 @@
   <script type="text/javascript" src="js/r20.js"></script>
 </head>
 <body>
-  <p>Select Roll 20 module json: <input id="JSONFile" type="file" class="btn-outline" name="Roll 20 JSON File"/><br/>Hide Named Objects (usually DM Layer monster images):<input type="checkbox" id="hideNamedObjects" checked="checked"/></p>
+  <p>Select Roll 20 module json: <input id="JSONFile" type="file" class="btn-outline" name="Roll 20 JSON File"/>
+    <br/>Hide Named Objects (usually DM Layer monster images):<input type="checkbox" id="hideNamedObjects" checked="checked"/>
+    <br/>Hide Maps without walls:<input type="checkbox" id="hideMapsWithoutWalls" checked="checked"/>
+  </p>
   <p><input id="downloadButton" style="display:none;" type="button" value="Download Module" onClick="downloadModule();"/></p>
   <textarea id="module"></textarea>
   <div id="output"></div>
