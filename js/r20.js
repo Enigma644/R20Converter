@@ -9,6 +9,26 @@ $(function() {
   });
 });
 
+/*
+function getData(img,format) {  
+  var canvas = document.createElement('canvas')
+  var ctx = canvas.getContext('2d')
+  canvas.width = img.width
+  canvas.height = img.height
+  ctx.drawImage(img, 0, 0)
+  var data = canvas.toDataURL('image/'+format,1)
+  return data.substr(data.indexOf(',')+1);
+}
+*/
+
+function getExtn(src){
+  var extn='png';
+  if (src.indexOf('.png')==-1){
+    extn='jpg';    
+  }
+  return extn;
+}
+
 var json;
 var fileName;
 function onReaderLoad(event){
@@ -58,7 +78,7 @@ function onReaderLoad(event){
         console.log('scaling by '+sf);
       }
       
-      outDiv.innerHTML+='<div class="mapWrapper"><h4>'+mapName+'</h4><div id="map'+m+'" class="map"><img class="background" src="'+mapImageSrc+'" width="'+mapWidth*sf+'px" height="'+mapHeight*sf+'px"/></div></div>';
+      outDiv.innerHTML+='<div class="mapWrapper"><h4>'+mapName+'</h4><div id="map'+m+'" class="map"><img class="background" crossorigin="anonymous" src="'+mapImageSrc+'" width="'+mapWidth*sf+'px" height="'+mapHeight*sf+'px"/></div></div>';
       var mapDiv = document.getElementById('map'+m);
             
       console.log('Map Image Size: '+mapWidth+' x '+mapHeight);
@@ -66,11 +86,7 @@ function onReaderLoad(event){
       var moduleText = '<map>';
       moduleText += '<name>'+mapName+'</name>';
       moduleText += '<gridSize>70</gridSize>';
-      var mapImageExtension='.png';
-      if (mapImageSrc.indexOf('.png')!=-1){
-        mapImageExtension='.jpg';    
-      }
-      moduleText += '<image>'+mapName+mapImageExtension+'</image>';
+      moduleText += '<image>'+mapName+'.'+getExtn(mapImageSrc)+'</image>';
       moduleText += '<canvas>'+mapName+'.svg</canvas>';
       
       //Graphic Objects
@@ -87,7 +103,7 @@ function onReaderLoad(event){
           }
           var tileSrc = json.maps[m].graphics[g].imgsrc.replace(/med.|thumb./,'original.');
           var style = 'position:absolute;left:'+left*sf+'px;top:'+top*sf+'px;width:'+width*sf+'px;height:'+height*sf+'px;';
-          mapDiv.innerHTML += '<img style="'+style+'" id="'+id+'" class="tile" title="'+title+'" src="'+tileSrc+'"/>';
+          mapDiv.innerHTML += '<img style="'+style+'" id="'+id+'" class="tile" title="'+title+'" crossorigin="anonymous" src="'+tileSrc+'"/>';
           //Tile
           moduleText += '<tile>';
           moduleText += '<x>'+left+'</x>';
@@ -100,11 +116,7 @@ function onReaderLoad(event){
           moduleText += '<asset>';
             moduleText += '<name>'+title+'</name>';
             moduleText += '<type>image</type>';
-            var tileImageExtension='.png';
-            if (tileSrc.indexOf('.png')!=-1){
-              tileImageExtension='.jpg';
-            }
-            moduleText += '<resource>'+id+tileImageExtension+'</resource>';
+            moduleText += '<resource>'+id+'.'+getExtn(tileSrc)+'</resource>';
           moduleText += '</asset>';
           moduleText += '</tile>';
         } else {
@@ -198,23 +210,23 @@ function downloadModule(){
     var mapName = mapWrappers[mw].getElementsByTagName('h4')[0].innerText
     var map = mapWrappers[mw].getElementsByClassName('map')[0];    
     var mapImage = map.getElementsByClassName('background')[0];
-    var mapImageExtension='.png';
-    if (mapImage.src.indexOf('.png')!=-1){
-      mapImageExtension='.jpg';    
-    }
+    var mapImageExtension=getExtn(mapImage.src);
+
     var svg = map.getElementsByTagName('svg')[0];   
-    zip.file(mapName+'.svg', document.getElementById(svg.id).outerHTML);    
-    zip.file(mapName+mapImageExtension, urlToPromise(mapImage.src), {binary:true});
+    zip.file(mapName+'.svg', document.getElementById(svg.id).outerHTML);
+    //var mapData = getData(mapImage,mapImageExtension);
+    //zip.file(mapName+'.'+mapImageExtension, mapData, {base64: true});    
+    zip.file(mapName+'.'+mapImageExtension, urlToPromise(mapImage.src), {binary:true});
     
     var tiles = map.getElementsByClassName('tile');
     for (var t=0;t<tiles.length;t++){
       var tileId = tiles[t].id;
       var tileSrc = tiles[t].src;
-      var tileExtension='.png';
-      if (tileSrc.indexOf('.png')!=-1){
-        tileExtension='.jpg';    
-      }
-      zip.file(tileId+tileExtension, urlToPromise(tileSrc), {binary:true});
+      var tileExtension=getExtn(tileSrc);
+
+      //var tileData = getData(tiles[t],tileExtension);
+      //zip.file(tileId+'.'+tileExtension, tileData, {base64: true});
+      zip.file(tileId+'.'+tileExtension, urlToPromise(tileSrc), {binary:true});
     }
   }  
   zip.generateAsync({type:'blob'}).then(function(content) {
