@@ -1,6 +1,5 @@
 $(function() {
   $("input:file").change(function (event){
-    console.log("Got a file");
     var reader = new FileReader();
     reader.onload = onReaderLoad;
     fileName = event.target.files[0].name;
@@ -29,11 +28,23 @@ function getExtn(src){
   return extn;
 }
 
+function encodeXML(str){
+  return str.replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 var json;
 var fileName;
+var hideNamedObjects=true;
+
 function onReaderLoad(event){
   json = JSON.parse(event.target.result);
   console.log("JSON Loaded");
+  
+  hideNamedObjects = (document.getElementById('hideNamedObjects').checked==true);
   
   //Scaling
   var maxWidth=1000.0;
@@ -50,15 +61,16 @@ function onReaderLoad(event){
   var module = document.getElementById('module');
   
   var moduleName = fileName.replace(/.json/,'');
-  module.value = '<name>'+moduleName+'</name>';
-  module.value += '<slug>'+moduleName.toLowerCase().replace(/ /g,'-')+'</slug>';
+  module.value = '<name>'+encodeXML(moduleName)+'</name>';
+  module.value += '<slug>'+encodeXML(moduleName.toLowerCase().replace(/ /g,'-'))+'</slug>';
   module.value += '<category>adventure</category>';
   module.value += '<author>Roll 20</author>';
   
   for (var m = 0; m < json.maps.length; m++) {
     if (json.maps[m].paths.length>0){
       mapName = json.maps[m].attributes.name;
-      console.log('Map '+m+ ' has paths - ' + mapName);
+      console.log('--------------------------');
+      console.log('Map [id:'+m+'] - ' + mapName);
 
       //Map layer meta
       mapWidth =0.0;      
@@ -75,19 +87,16 @@ function onReaderLoad(event){
             
       if (mapWidth>maxWidth){
         sf=maxWidth/mapWidth;
-        console.log('scaling by '+sf);
       }
       
       outDiv.innerHTML+='<div class="mapWrapper"><h4>'+mapName+'</h4><div id="map'+m+'" class="map"><img class="background" crossorigin="anonymous" src="'+mapImageSrc+'" width="'+mapWidth*sf+'px" height="'+mapHeight*sf+'px"/></div></div>';
-      var mapDiv = document.getElementById('map'+m);
-            
-      console.log('Map Image Size: '+mapWidth+' x '+mapHeight);
-      
+      var mapDiv = document.getElementById('map'+m);      
+
       var moduleText = '<map>';
-      moduleText += '<name>'+mapName+'</name>';
+      moduleText += '<name>'+encodeXML(mapName)+'</name>';
       moduleText += '<gridSize>70</gridSize>';
-      moduleText += '<image>'+mapName+'.'+getExtn(mapImageSrc)+'</image>';
-      moduleText += '<canvas>'+mapName+'.svg</canvas>';
+      moduleText += '<image>'+encodeXML(mapName)+'.'+getExtn(mapImageSrc)+'</image>';
+      moduleText += '<canvas>'+encodeXML(mapName)+'.svg</canvas>';
       
       //Graphic Objects
       for (var g=0;g<json.maps[m].graphics.length;g++){
@@ -98,29 +107,35 @@ function onReaderLoad(event){
           var height = json.maps[m].graphics[g].height;
           var title = json.maps[m].graphics[g].name;
           var id = 'graphic_m'+m+'_'+json.maps[m].graphics[g].layer+'_g'+g;
-          if (title==''){
-            title = id;
+          
+          if (hideNamedObjects && title!=''){
+            //Probably a monster. Ignore.            
+          } else {
+            if (title==''){
+              title = id;
+            }
+            var tileSrc = json.maps[m].graphics[g].imgsrc.replace(/med.|thumb./,'original.');
+            var style = 'position:absolute;left:'+left*sf+'px;top:'+top*sf+'px;width:'+width*sf+'px;height:'+height*sf+'px;';
+            mapDiv.innerHTML += '<img style="'+style+'" id="'+id+'" class="tile" title="'+title+'" crossorigin="anonymous" src="'+tileSrc+'"/>';
+            //Tile
+            moduleText += '<tile>';
+            moduleText += '<x>'+left+'</x>';
+            moduleText += '<y>'+top+'</y>';
+            moduleText += '<width>'+width+'</width>';
+            moduleText += '<height>'+height+'</height>';
+            moduleText += '<opacity>1.0</opacity>';
+            moduleText += '<layer>dm</layer>';
+            moduleText += '<locked>YES</locked>';
+            moduleText += '<asset>';
+              moduleText += '<name>'+encodeXML(title)+'</name>';
+              moduleText += '<type>image</type>';
+              moduleText += '<resource>'+encodeXML(id)+'.'+getExtn(tileSrc)+'</resource>';
+            moduleText += '</asset>';
+            moduleText += '</tile>';
           }
-          var tileSrc = json.maps[m].graphics[g].imgsrc.replace(/med.|thumb./,'original.');
-          var style = 'position:absolute;left:'+left*sf+'px;top:'+top*sf+'px;width:'+width*sf+'px;height:'+height*sf+'px;';
-          mapDiv.innerHTML += '<img style="'+style+'" id="'+id+'" class="tile" title="'+title+'" crossorigin="anonymous" src="'+tileSrc+'"/>';
-          //Tile
-          moduleText += '<tile>';
-          moduleText += '<x>'+left+'</x>';
-          moduleText += '<y>'+top+'</y>';
-          moduleText += '<width>'+width+'</width>';
-          moduleText += '<height>'+height+'</height>';
-          moduleText += '<opacity>1.0</opacity>';
-          moduleText += '<layer>dm</layer>';
-          moduleText += '<locked>YES</locked>';
-          moduleText += '<asset>';
-            moduleText += '<name>'+title+'</name>';
-            moduleText += '<type>image</type>';
-            moduleText += '<resource>'+id+'.'+getExtn(tileSrc)+'</resource>';
-          moduleText += '</asset>';
-          moduleText += '</tile>';
         } else {
-          console.log(g+' '+json.maps[m].graphics[g].layer);
+          //walls - ignoring
+          //console.log(g+' '+json.maps[m].graphics[g].layer);
         }
       }
       

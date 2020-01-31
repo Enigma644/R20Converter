@@ -39,7 +39,7 @@
   <script type="text/javascript" src="js/r20.js"></script>
 </head>
 <body>
-  <p>Select Roll 20 module json: <input id="JSONFile" type="file" class="btn-outline" name="Roll 20 JSON File"/></p>
+  <p>Select Roll 20 module json: <input id="JSONFile" type="file" class="btn-outline" name="Roll 20 JSON File"/><br/>Hide Named Objects (usually DM Layer monster images):<input type="checkbox" id="hideNamedObjects" checked="checked"/></p>
   <p><input id="downloadButton" style="display:none;" type="button" value="Download Module" onClick="downloadModule();"/></p>
   <textarea id="module"></textarea>
   <div id="output"></div>
