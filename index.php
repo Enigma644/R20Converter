@@ -35,16 +35,38 @@
       border:1px dashed red;
       border-radius: 45px;
     }
-    /*
-    .layer-gm {
-      border:1px solid orange;
+    .key span {
+      margin-left:10px;
     }
+    .key .wall {
+      border-left:3px solid #ff7f00;
+      padding-left:5px;
+    }
+    .key .door {
+      border-left:3px solid #00ffff;
+      padding-left:5px;
+    }
+    .key .light {
+      padding-left:5px;
+      padding-right:5px;
+    }
+
+    .layer-dm {
+      border: 1px solid #00f;
+      background: #00f5;
+    }
+    
+    .layer-misc {
+      border: 1px solid #0f0;
+      background: #0f05;
+    }
+    /*
     .layer-objects {
       border:1px solid blue;
     }
     */
     .tile.bad {
-      border:2px solid red;
+      border:2px solid #f00;
       background-color: #f009;
     }
   </style>
@@ -56,8 +78,9 @@
 </head>
 <body>
   <p>Select Roll 20 module json: <input id="JSONFile" type="file" class="btn-outline" name="Roll 20 JSON File"/>
-    <br/>Hide Named Objects (usually DM Layer monster images):<input type="checkbox" id="hideNamedObjects" checked="checked"/>
-    <br/>Hide Maps without walls:<input type="checkbox" id="hideMapsWithoutWalls" checked="checked"/>
+    <br/>Hide character images:<input type="checkbox" id="hideCharacterObjects" checked="checked"/>
+    <br/>Hide maps without walls:<input type="checkbox" id="hideMapsWithoutWalls" checked="checked"/>
+    <br/>Key: <span class="key"><span class="wall">Wall</span><span class="door">Door</span><span class="light">Light source</span><span class="layer-dm">DM Layer Objects</span><span class="tile bad">Missing Image</span></span>
   </p>
   <p><input id="downloadButton" style="display:none;" type="button" value="Download Module" onClick="downloadModule();"/></p>
   <textarea id="module"></textarea>

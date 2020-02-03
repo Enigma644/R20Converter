@@ -6,6 +6,10 @@
   Map Graphics:
   * json.maps[m].graphics[g].layer=='objects'
   * json.maps[m].graphics[g].layer=='gmlayer'
+  
+  Characters (Monsters):
+  * json.maps[m].graphics[g].represents!=''
+
 */
 
 $(function() {
@@ -48,7 +52,7 @@ function encodeXML(str){
 
 var json;
 var fileName;
-var hideNamedObjects=true;
+var hideCharacterObjects=true;
 var hideMapsWithoutWalls=false;
 var imageCount = 0;
 var imagesLoaded = 0;
@@ -57,7 +61,7 @@ function onReaderLoad(event){
   json = JSON.parse(event.target.result);
   console.log("JSON Loaded");
   
-  hideNamedObjects = (document.getElementById('hideNamedObjects').checked==true);
+  hideCharacterObjects = (document.getElementById('hideCharacterObjects').checked==true);
   hideMapsWithoutWalls = (document.getElementById('hideMapsWithoutWalls').checked==true);
   
   //Reset image count
@@ -131,24 +135,32 @@ function onReaderLoad(event){
     
     //Graphic Objects
     for (var g=0;g<json.maps[m].graphics.length;g++){
-      if (json.maps[m].graphics[g].layer=='objects' || json.maps[m].graphics[g].layer=='gmlayer'){
+      if (json.maps[m].graphics[g].layer=='objects' || json.maps[m].graphics[g].layer=='gmlayer' || json.maps[m].graphics[g].layer=='walls'){
         var left = json.maps[m].graphics[g].left;
         var top = json.maps[m].graphics[g].top; 
         var width = json.maps[m].graphics[g].width;
         var height = json.maps[m].graphics[g].height;
         var title = json.maps[m].graphics[g].name;
         var id = 'graphic_m'+m+'_'+json.maps[m].graphics[g].layer+'_g'+g;
+        var isCharacter = json.maps[m].graphics[g].represents!='';
+        var tileSrc = json.maps[m].graphics[g].imgsrc.replace(/med.|thumb./,'original.'); 
         
         var isLight=false;
-        if (json.maps[m].graphics[g].light_otherplayers==true && json.maps[m].graphics[g].represents==''){
+        if (json.maps[m].graphics[g].light_otherplayers==true && !isCharacter){
           isLight=true;
         }
+        
+        if (json.maps[m].graphics[g].layer=='walls' && hasLight){
+          isLight = true;
+          tileSrc = 'img/Trans1x1.png';
+        }
+        
         if (!isLight && (json.maps[m].graphics[g].light_otherplayers==true)){
           console.log('%cLight? :'+title +' - '+ id,'background:#ff06');
-        } 
+        }
         
-        if (hideNamedObjects && title!='' && !isLight){
-          //Probably a monster. Ignore.            
+        if (hideCharacterObjects && isCharacter){
+          //Probably a character/monster. Ignore.            
         } else {
           if (title==''){
             title = id;
@@ -163,14 +175,14 @@ function onReaderLoad(event){
           if (hasLight){
             cssClass += ' light';
           }
-          if (json.maps[m].graphics[g].layer=='objects'){
+          if (json.maps[m].graphics[g].layer=='objects' || isLight ){
             cssClass += ' layer-objects';
+          } else if (json.maps[m].graphics[g].layer=='gmlayer'){
+            cssClass += ' layer-dm';
+          } else {
+            cssClass += ' layer-misc';           
           }
-          if (json.maps[m].graphics[g].layer=='gmlayer'){
-            cssClass += ' layer-gm';
-          }
-                    
-          var tileSrc = json.maps[m].graphics[g].imgsrc.replace(/med.|thumb./,'original.');
+          
           var style = 'position:absolute;left:'+(left-json.maps[m].graphics[g].width/2)*sf+'px;top:'+(top-json.maps[m].graphics[g].height/2)*sf+'px;width:'+width*sf+'px;height:'+height*sf+'px;';
           mapDiv.innerHTML += '<img style="'+style+'" id="'+id+'" class="'+cssClass+'" title="'+title+'" crossorigin="anonymous" src="'+tileSrc+'"/>';
           //Tile
@@ -180,11 +192,20 @@ function onReaderLoad(event){
           moduleText += '<width>'+Math.round(width)+'</width>';
           moduleText += '<height>'+Math.round(height)+'</height>';
           moduleText += '<opacity>1.0</opacity>';
+          
+          if (json.maps[m].graphics[g].layer=='objects' || isLight){
+            moduleText += '<layer>object</layer>';
+          }
+          if (json.maps[m].graphics[g].layer=='gmlayer'){
+            moduleText += '<layer>dm</layer>';
+          }
+          /*
           if (isLight){
             moduleText += '<layer>object</layer>';
           } else {
             moduleText += '<layer>dm</layer>';
-          }
+          }*/
+          
           moduleText += '<locked>YES</locked>';
           moduleText += '<asset>';
             moduleText += '<name>'+encodeXML(title)+'</name>';
@@ -204,7 +225,6 @@ function onReaderLoad(event){
           moduleText += '</tile>';
         }
       } else {
-        //walls - ignoring
         //console.log(g+' '+json.maps[m].graphics[g].layer);
       }
     }
