@@ -35,6 +35,18 @@
       border:1px dashed red;
       border-radius: 45px;
     }
+    /*
+    .layer-gm {
+      border:1px solid orange;
+    }
+    .layer-objects {
+      border:1px solid blue;
+    }
+    */
+    .tile.bad {
+      border:2px solid red;
+      background-color: #f009;
+    }
   </style>
   <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
   <script type="text/javascript" src="js/jszip.min.js"></script>

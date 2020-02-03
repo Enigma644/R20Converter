@@ -1,3 +1,13 @@
+/*
+  Data structure notes
+  --------------------
+  Map:
+  * json.maps[m].graphics[g].layer=='map'
+  Map Graphics:
+  * json.maps[m].graphics[g].layer=='objects'
+  * json.maps[m].graphics[g].layer=='gmlayer'
+*/
+
 $(function() {
   $("input:file").change(function (event){
     var reader = new FileReader();
@@ -40,6 +50,8 @@ var json;
 var fileName;
 var hideNamedObjects=true;
 var hideMapsWithoutWalls=false;
+var imageCount = 0;
+var imagesLoaded = 0;
 
 function onReaderLoad(event){
   json = JSON.parse(event.target.result);
@@ -47,6 +59,10 @@ function onReaderLoad(event){
   
   hideNamedObjects = (document.getElementById('hideNamedObjects').checked==true);
   hideMapsWithoutWalls = (document.getElementById('hideMapsWithoutWalls').checked==true);
+  
+  //Reset image count
+  imageCount = 0;
+  imagesLoaded = 0;
   
   //Scaling
   var maxWidth=1000.0;
@@ -124,13 +140,6 @@ function onReaderLoad(event){
         var id = 'graphic_m'+m+'_'+json.maps[m].graphics[g].layer+'_g'+g;
         
         var isLight=false;
-        /*
-        if (title.toLowerCase().indexOf('light source')!=-1){
-          isLight=true;
-        }
-        if (json.maps[m].graphics[g].light_otherplayers==true && title==''){
-          isLight=true;
-        }*/
         if (json.maps[m].graphics[g].light_otherplayers==true && json.maps[m].graphics[g].represents==''){
           isLight=true;
         }
@@ -149,10 +158,21 @@ function onReaderLoad(event){
           if (json.maps[m].graphics[g].light_radius!=''){
             hasLight=true;
           }
+          
+          var cssClass='tile';
+          if (hasLight){
+            cssClass += ' light';
+          }
+          if (json.maps[m].graphics[g].layer=='objects'){
+            cssClass += ' layer-objects';
+          }
+          if (json.maps[m].graphics[g].layer=='gmlayer'){
+            cssClass += ' layer-gm';
+          }
                     
           var tileSrc = json.maps[m].graphics[g].imgsrc.replace(/med.|thumb./,'original.');
           var style = 'position:absolute;left:'+(left-json.maps[m].graphics[g].width/2)*sf+'px;top:'+(top-json.maps[m].graphics[g].height/2)*sf+'px;width:'+width*sf+'px;height:'+height*sf+'px;';
-          mapDiv.innerHTML += '<img style="'+style+'" id="'+id+'" class="tile'+(hasLight?' light':'')+'" title="'+title+'" crossorigin="anonymous" src="'+tileSrc+'"/>';
+          mapDiv.innerHTML += '<img style="'+style+'" id="'+id+'" class="'+cssClass+'" title="'+title+'" crossorigin="anonymous" src="'+tileSrc+'"/>';
           //Tile
           moduleText += '<tile>';
           moduleText += '<x>'+Math.round(left)+'</x>';
@@ -247,6 +267,36 @@ function onReaderLoad(event){
   }
   
   document.getElementById('downloadButton').style.display='block';
+  document.getElementById('downloadButton').value='Loading Images...';
+  document.getElementById('downloadButton').disabled='disabled';
+    
+  //Add image load check
+  var images = document.images;
+  imageCount = images.length;
+  
+  [].forEach.call(images, function(image){
+    if(image.complete){
+      incrementImageCounter();
+    } else {
+      image.addEventListener('load', incrementImageCounter, false);
+      image.addEventListener('error', imageError, false);
+    }
+  });
+}
+
+function imageError(image){
+  console.log('Error with image '+this.id+' replacing with blank');
+  this.className +=' bad';
+  this.src='img/Trans1x1.png';
+}
+
+function incrementImageCounter(image){
+  imagesLoaded++;
+  if (imagesLoaded==imageCount){
+    console.log('All images loaded!');
+    document.getElementById('downloadButton').value='Download Module';
+    document.getElementById('downloadButton').disabled='';
+  }
 }
 
 function urlToPromise(url) {
@@ -264,8 +314,16 @@ function urlToPromise(url) {
 
 function downloadModule(){
   console.log('Download');
+  
   document.getElementById('downloadButton').disabled='disabled';
   document.getElementById('downloadButton').value='Please Wait...';
+  
+  if (!preCheck()){
+    document.getElementById('downloadButton').value='Download Module';
+    document.getElementById('downloadButton').disabled='';
+    return false;
+  }
+    
   var zipName = fileName.replace(/.json/,'')+'.module';
   var zip = new JSZip();
   var module = document.getElementById('module');
@@ -291,10 +349,13 @@ function downloadModule(){
       var tileId = tiles[t].id;
       var tileSrc = tiles[t].src;
       var tileExtension=getExtn(tileSrc);
-
-      //var tileData = getData(tiles[t],tileExtension);
-      //zip.file(tileId+'.'+tileExtension, tileData, {base64: true});
-      zip.file(tileId+'.'+tileExtension, urlToPromise(tileSrc), {binary:true});
+      if (tiles[t].naturalWidth==0){
+        console.log('%cImg failed to load :'+tileId,'background:#ff00');
+      } else {
+        //var tileData = getData(tiles[t],tileExtension);
+        //zip.file(tileId+'.'+tileExtension, tileData, {base64: true});
+        zip.file(tileId+'.'+tileExtension, urlToPromise(tileSrc), {binary:true});
+      }
     }
   }  
   zip.generateAsync({type:'blob'}).then(function(content) {
@@ -302,4 +363,25 @@ function downloadModule(){
     document.getElementById('downloadButton').value='Download Module';
     document.getElementById('downloadButton').disabled='';
   });
+}
+
+function preCheck(){
+  var foundBad = false;
+  var mapWrappers = document.getElementsByClassName('mapWrapper');
+  for (var mw=0;mw<mapWrappers.length;mw++){
+    var map = mapWrappers[mw].getElementsByClassName('map')[0];
+    var tiles = map.getElementsByClassName('tile');    
+    for (var t=0;t<tiles.length;t++){
+      if (tiles[t].naturalWidth==0){
+        foundBad=true;
+        console.log('%cImg failed to load :'+tiles[t].id,'background:#ff06');
+      }
+    }
+  }
+  
+  if (foundBad){
+    console.log('%cDownload Aborted','background:#ff06');
+    return false;
+  }
+  return true;
 }
