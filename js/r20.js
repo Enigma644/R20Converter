@@ -82,6 +82,7 @@ function onReaderLoad(event){
   module.value += '<category>adventure</category>';
   module.value += '<author>Roll 20</author>';
   
+  //Maps
   for (var m = 0; m < json.maps.length; m++) {
     var hasWalls=false;
     if (json.maps[m].paths.length>0){
@@ -294,6 +295,99 @@ function onReaderLoad(event){
     module.value+=moduleText;
   }
   
+  //Pages
+  //Create groups from journal
+  var groups = {};
+  moduleText ='';
+  
+  for (var j=0;j<json.journal.length;j++){
+    for (var p=0;p<json.journal[j].path.length;p++){
+      var name = json.journal[j].path[p];
+      var parentKey='';
+      if (p==0){
+        parentKey='';        
+      } else {
+        parentKey=json.journal[j].path[p-1];
+      }
+      if (groups[name]==undefined){
+        groups[name]={"id":createUUID(),"parent":parentKey};
+      }
+    }
+  }
+    
+  for (var key in groups){
+    if (groups[key].parent==''){
+      moduleText += '<group id="'+groups[key].id+'">';
+    } else {
+      moduleText += '<group id="'+groups[key].id+'" parent="'+groups[groups[key].parent].id+'">';
+    }
+    moduleText += '<name>'+encodeXML(key)+'</name>';
+    moduleText += '<slug>'+encodeXML(key.toLowerCase().replace(/ /g,'-'))+'</slug>';
+    moduleText += '</group>'+"\n";   
+  }
+  
+  //Handouts
+  for (var h=0;h<json.handouts.length;h++){
+    var pageId = json.handouts[h].attributes.id;
+    var pageName = json.handouts[h].attributes.name;
+    var avatar = json.handouts[h].attributes.avatar;
+    var blobNotes = unescape(json.handouts[h].blobNotes);
+    var blobGmNotes = unescape(json.handouts[h].blobGmNotes);
+    if (blobGmNotes!=''){
+      if (blobNotes!=''){
+        blobNotes+='<hr/>';
+      }
+      blobNotes+=blobGmNotes;
+    }
+    if (avatar!=''){
+      blobNotes+='<img src="'+avatar+'"/>';
+    }
+    var parentKey = '';
+    for (var j=0;j<json.journal.length;j++){
+      if (json.journal[j].id==pageId){
+        parentKey = json.journal[j].path[json.journal[j].path.length-1];
+      }
+    }
+    
+    moduleText += '<page parent="'+groups[parentKey].id+'">'; 
+    moduleText += '<name>'+encodeXML(pageName)+'</name>';
+    moduleText += '<slug>'+encodeXML(pageName.toLowerCase().replace(/ /g,'-'))+'</slug>';
+    moduleText += '<content>'+encodeXML(blobNotes)+'</content>';
+    moduleText += '</page>';
+  }
+  
+  //Characters
+  for (var c=0;c<json.characters.length;c++){
+    var charId = json.characters[c].attributes.id;
+    var charName = json.characters[c].attributes.name;
+    var avatar = json.characters[c].attributes.avatar;
+    var blobBio = unescape(json.characters[c].blobBio);
+    var blobGmNotes = unescape(json.characters[c].blobGmNotes);
+    if (blobGmNotes!=''){
+      if (blobBio!=''){
+        blobBio+='<hr/>';
+      }
+      blobBio+=blobGmNotes;
+    }
+    if (avatar!=''){
+      blobBio+='<img src="'+avatar+'"/>';
+    }
+    var parentKey = '';
+    for (var j=0;j<json.journal.length;j++){
+      if (json.journal[j].id==charId){
+        parentKey = json.journal[j].path[json.journal[j].path.length-1];
+      }
+    }
+    
+    moduleText += '<page parent="'+groups[parentKey].id+'">'; 
+    moduleText += '<name>'+encodeXML(charName)+'</name>';
+    moduleText += '<slug>'+encodeXML(charName.toLowerCase().replace(/ /g,'-'))+'</slug>';
+    moduleText += '<content>'+encodeXML(blobBio)+'</content>';
+    moduleText += '</page>';
+  }
+  
+  module.value+=moduleText;
+  
   document.getElementById('downloadButton').style.display='block';
   document.getElementById('downloadButton').value='Loading Images...';
   document.getElementById('downloadButton').disabled='disabled';
@@ -438,4 +532,18 @@ function preCheck(){
     return false;
   }
   return true;
+}
+
+function createUUID() {
+    var s = [];
+    var hexDigits = "0123456789abcdef";
+    for (var i = 0; i < 36; i++) {
+        s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
+    }
+    s[14] = "4";
+    s[19] = hexDigits.substr((s[19] & 0x3) | 0x8, 1);
+    s[8] = s[13] = s[18] = s[23] = "-";
+
+    var uuid = s.join("");
+    return uuid.toUpperCase();
 }
