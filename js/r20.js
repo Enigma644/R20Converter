@@ -22,18 +22,6 @@ $(function() {
   });
 });
 
-/*
-function getData(img,format) {  
-  var canvas = document.createElement('canvas')
-  var ctx = canvas.getContext('2d')
-  canvas.width = img.width
-  canvas.height = img.height
-  ctx.drawImage(img, 0, 0)
-  var data = canvas.toDataURL('image/'+format,1)
-  return data.substr(data.indexOf(',')+1);
-}
-*/
-
 function getExtn(src){
   var extn='png';
   if (src.indexOf('.png')==-1){
@@ -57,6 +45,9 @@ var hideMapsWithoutWalls=false;
 var imageCount = 0;
 var imagesLoaded = 0;
 
+var maxZipWidth=4096.0;
+var maxZipHeight=4096.0;
+
 function onReaderLoad(event){
   json = JSON.parse(event.target.result);
   console.log("JSON Loaded");
@@ -68,9 +59,12 @@ function onReaderLoad(event){
   imageCount = 0;
   imagesLoaded = 0;
   
-  //Scaling
-  var maxWidth=1000.0;
-  var sf=1.0;
+  //Scaling (Display)
+  var maxDisplayWidth=1000.0;
+  var sfd=1.0;
+
+  //Scaling (Zip)
+  var sfz=1.0;
   
   var mapWidth=0.0;
   var mapHeight=0.0;
@@ -113,11 +107,21 @@ function onReaderLoad(event){
       } 
     }
           
-    if (mapWidth>maxWidth){
-      sf=maxWidth/mapWidth;
+    if (mapWidth>maxDisplayWidth){
+      sfd=maxDisplayWidth/mapWidth;
+    } else {
+      sfd=1.0;
     }
     
-    outDiv.innerHTML+='<div class="mapWrapper"><h4>'+mapName+'</h4><div id="map'+m+'" class="map"><img class="background" crossorigin="anonymous" src="'+mapImageSrc+'" width="'+mapWidth*sf+'px" height="'+mapHeight*sf+'px"/></div></div>';
+    if ((mapWidth>=mapHeight) && mapWidth>maxZipWidth){
+      sfz=maxZipWidth/mapWidth;
+    } else if ((mapHeight>mapWidth) && mapHeight>maxZipHeight) {
+      sfz=maxZipHeight/mapHeight;
+    } else {
+      sfz=1.0;
+    }
+    
+    outDiv.innerHTML+='<div class="mapWrapper"><h4>'+mapName+'</h4><div id="map'+m+'" class="map"><img id="bgmap'+m+'" class="background" alt="'+mapName+'" crossorigin="anonymous" src="'+mapImageSrc+'" width="'+mapWidth*sfd+'px" height="'+mapHeight*sfd+'px"/></div></div>';
     var mapDiv = document.getElementById('map'+m);      
 
     var moduleText = '<map>';
@@ -127,7 +131,11 @@ function onReaderLoad(event){
     var gridSize = (1.0/feetPerGrid)*350.0
     
     moduleText += '<gridSize>'+Math.round(gridSize)+'</gridSize>';
-    moduleText += '<image>'+encodeXML(mapName)+'.'+getExtn(mapImageSrc)+'</image>';
+    if (sfz==1.0){
+      moduleText += '<image>'+encodeXML(mapName)+'.'+getExtn(mapImageSrc)+'</image>';
+    } else {
+      moduleText += '<image>'+encodeXML(mapName)+'.png</image>';
+    }
     if (hasWalls){
       moduleText += '<canvas>'+encodeXML(mapName)+'.svg</canvas>';
       moduleText += '<lineOfSight>YES</lineOfSight>';
@@ -183,14 +191,14 @@ function onReaderLoad(event){
             cssClass += ' layer-misc';           
           }
           
-          var style = 'position:absolute;left:'+(left-json.maps[m].graphics[g].width/2)*sf+'px;top:'+(top-json.maps[m].graphics[g].height/2)*sf+'px;width:'+width*sf+'px;height:'+height*sf+'px;';
+          var style = 'position:absolute;left:'+(left-json.maps[m].graphics[g].width/2)*sfd+'px;top:'+(top-json.maps[m].graphics[g].height/2)*sfd+'px;width:'+width*sfd+'px;height:'+height*sfd+'px;';
           mapDiv.innerHTML += '<img style="'+style+'" id="'+id+'" class="'+cssClass+'" title="'+title+'" crossorigin="anonymous" src="'+tileSrc+'"/>';
           //Tile
           moduleText += '<tile>';
-          moduleText += '<x>'+Math.round(left)+'</x>';
-          moduleText += '<y>'+Math.round(top)+'</y>';
-          moduleText += '<width>'+Math.round(width)+'</width>';
-          moduleText += '<height>'+Math.round(height)+'</height>';
+          moduleText += '<x>'+Math.round(left*sfz)+'</x>';
+          moduleText += '<y>'+Math.round(top*sfz)+'</y>';
+          moduleText += '<width>'+Math.round(width*sfz)+'</width>';
+          moduleText += '<height>'+Math.round(height*sfz)+'</height>';
           moduleText += '<opacity>1.0</opacity>';
           
           if (json.maps[m].graphics[g].layer=='objects' || isLight){
@@ -253,7 +261,7 @@ function onReaderLoad(event){
     
     //Paths
     if (hasWalls){
-      var svgXML='<svg id="svg'+m+'" xmlns="http://www.w3.org/2000/svg" version="1.0" width="'+mapWidth*sf+'" height="'+mapHeight*sf+'" viewBox="0 0 '+mapWidth+' '+mapHeight+'">';
+      var svgXML='<svg id="svg'+m+'" xmlns="http://www.w3.org/2000/svg" version="1.0" width="'+mapWidth*sfd+'" height="'+mapHeight*sfd+'" viewBox="0 0 '+(mapWidth*sfz)+' '+(mapHeight*sfz)+'">';
       for (var p=0;p<json.maps[m].paths.length;p++){
         var pLeft = json.maps[m].paths[p].left;
         var pTop = json.maps[m].paths[p].top;
@@ -273,8 +281,8 @@ function onReaderLoad(event){
         var path = '';
         for (var i=0;i<jsonPath.length;i++){
           path += ''+jsonPath[i][0];
-          path += ''+(jsonPath[i][1]+pLeft-pWidth/2);
-          path += ','+(jsonPath[i][2]+pTop-pHeight/2);
+          path += ''+(jsonPath[i][1]+pLeft-pWidth/2)*sfz;
+          path += ','+(jsonPath[i][2]+pTop-pHeight/2)*sfz;
         }
         svgXML+='<path class="'+pClass+'" stroke="'+pStroke+'" stroke-opacity="1.0" stroke-width="'+pStrokeWidth+'" stroke-linejoin="round" stroke-linecap="round" fill="none" d="'+path+'" />';
       }
@@ -304,14 +312,18 @@ function onReaderLoad(event){
   });
 }
 
-function imageError(image){
+function imageError(){
   console.log('Error with image '+this.id+' replacing with blank');
   this.className +=' bad';
   this.src='img/Trans1x1.png';
 }
 
-function incrementImageCounter(image){
+function incrementImageCounter(){
   imagesLoaded++;
+  if (this.naturalWidth>4096 || this.naturalHeight>4096){
+    console.log('%cImage too big! '+this.id+' - '+this.alt,'background:#ff06');
+  }
+  
   if (imagesLoaded==imageCount){
     console.log('All images loaded!');
     document.getElementById('downloadButton').value='Download Module';
@@ -360,9 +372,23 @@ function downloadModule(){
       var svg = map.getElementsByTagName('svg')[0];   
       zip.file(mapName+'.svg', document.getElementById(svg.id).outerHTML);
     }
-    //var mapData = getData(mapImage,mapImageExtension);
-    //zip.file(mapName+'.'+mapImageExtension, mapData, {base64: true});    
-    zip.file(mapName+'.'+mapImageExtension, urlToPromise(mapImage.src), {binary:true});
+
+    if (mapImage.naturalWidth>maxZipWidth || mapImage.naturalHeight>maxZipHeight){
+      var mapWidth=mapImage.naturalWidth;
+      var mapHeight=mapImage.naturalHeight;
+      if ((mapWidth>=mapHeight) && mapWidth>maxZipWidth){
+        sfz=maxZipWidth/mapWidth;
+      } else if ((mapHeight>mapWidth) && mapHeight>maxZipHeight) {
+        sfz=maxZipHeight/mapHeight;
+      } else {
+        sfz=1.0;
+      }
+      console.log('Resizing: '+mapImage.alt);
+      var mapData = getData(mapImage,mapWidth*sfz,mapHeight*sfz);
+      zip.file(mapName+'.png', mapData, {base64: true});
+    } else {
+      zip.file(mapName+'.'+mapImageExtension, urlToPromise(mapImage.src), {binary:true});
+    }
     
     var tiles = map.getElementsByClassName('tile');
     for (var t=0;t<tiles.length;t++){
@@ -372,8 +398,6 @@ function downloadModule(){
       if (tiles[t].naturalWidth==0){
         console.log('%cImg failed to load :'+tileId,'background:#ff00');
       } else {
-        //var tileData = getData(tiles[t],tileExtension);
-        //zip.file(tileId+'.'+tileExtension, tileData, {base64: true});
         zip.file(tileId+'.'+tileExtension, urlToPromise(tileSrc), {binary:true});
       }
     }
@@ -383,6 +407,16 @@ function downloadModule(){
     document.getElementById('downloadButton').value='Download Module';
     document.getElementById('downloadButton').disabled='';
   });
+}
+
+function getData(img,width,height) {
+  var canvas = document.createElement('canvas')
+  var ctx = canvas.getContext('2d')
+  canvas.width = width
+  canvas.height = height
+  ctx.drawImage(img, 0, 0, width, height)
+  var data = canvas.toDataURL('image/png',1)
+  return data.substr(data.indexOf(',')+1);
 }
 
 function preCheck(){
