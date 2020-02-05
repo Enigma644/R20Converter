@@ -30,12 +30,17 @@ function getExtn(src){
   return extn;
 }
 
+function unescapeBlob(str){
+  str = str.replace('%0C','');
+  return unescape(str);
+}
+
 function encodeXML(str){
   return str.replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+    .replace(/</gm, '&lt;')
+    .replace(/>/gm, '&gt;')
+    .replace(/"/gm, '&quot;')
+    .replace(/'/gm, '&apos;');
 }
 
 var json;
@@ -77,10 +82,10 @@ function onReaderLoad(event){
   var module = document.getElementById('module');
   
   var moduleName = fileName.replace(/.json/,'');
-  module.value = '<name>'+encodeXML(moduleName)+'</name>';
-  module.value += '<slug>'+encodeXML(moduleName.toLowerCase().replace(/ /g,'-'))+'</slug>';
-  module.value += '<category>adventure</category>';
-  module.value += '<author>Roll 20</author>';
+  module.value = ' <name>'+encodeXML(moduleName)+'</name>'+"\n";
+  module.value += ' <slug>'+encodeXML(moduleName.toLowerCase().replace(/ /g,'-'))+'</slug>'+"\n";
+  module.value += ' <category>adventure</category>'+"\n";
+  module.value += ' <author>Roll 20</author>'+"\n";
   
   //Maps
   for (var m = 0; m < json.maps.length; m++) {
@@ -125,21 +130,21 @@ function onReaderLoad(event){
     outDiv.innerHTML+='<div class="mapWrapper"><h4>'+mapName+'</h4><div id="map'+m+'" class="map"><img id="bgmap'+m+'" class="background" alt="'+mapName+'" crossorigin="anonymous" src="'+mapImageSrc+'" width="'+mapWidth*sfd+'px" height="'+mapHeight*sfd+'px"/></div></div>';
     var mapDiv = document.getElementById('map'+m);      
 
-    var moduleText = '<map>';
-    moduleText += '<name>'+encodeXML(mapName)+'</name>';
+    var moduleText = ' <map>'+"\n";
+    moduleText += '  <name>'+encodeXML(mapName)+'</name>'+"\n";
     
     var feetPerGrid = json.maps[m].attributes.scale_number;
     var gridSize = (1.0/feetPerGrid)*350.0
     
-    moduleText += '<gridSize>'+Math.round(gridSize)+'</gridSize>';
+    moduleText += '  <gridSize>'+Math.round(gridSize)+'</gridSize>'+"\n";
     if (sfz==1.0){
-      moduleText += '<image>'+encodeXML(mapName)+'.'+getExtn(mapImageSrc)+'</image>';
+      moduleText += '  <image>'+encodeXML(mapName)+'.'+getExtn(mapImageSrc)+'</image>'+"\n";
     } else {
-      moduleText += '<image>'+encodeXML(mapName)+'.png</image>';
+      moduleText += '  <image>'+encodeXML(mapName)+'.png</image>'+"\n";
     }
     if (hasWalls){
-      moduleText += '<canvas>'+encodeXML(mapName)+'.svg</canvas>';
-      moduleText += '<lineOfSight>YES</lineOfSight>';
+      moduleText += '  <canvas>'+encodeXML(mapName)+'.svg</canvas>'+"\n";
+      moduleText += '  <lineOfSight>YES</lineOfSight>'+"\n";
     }
     
     //Graphic Objects
@@ -195,18 +200,18 @@ function onReaderLoad(event){
           var style = 'position:absolute;left:'+(left-json.maps[m].graphics[g].width/2)*sfd+'px;top:'+(top-json.maps[m].graphics[g].height/2)*sfd+'px;width:'+width*sfd+'px;height:'+height*sfd+'px;';
           mapDiv.innerHTML += '<img style="'+style+'" id="'+id+'" class="'+cssClass+'" title="'+title+'" crossorigin="anonymous" src="'+tileSrc+'"/>';
           //Tile
-          moduleText += '<tile>';
-          moduleText += '<x>'+Math.round(left*sfz)+'</x>';
-          moduleText += '<y>'+Math.round(top*sfz)+'</y>';
-          moduleText += '<width>'+Math.round(width*sfz)+'</width>';
-          moduleText += '<height>'+Math.round(height*sfz)+'</height>';
-          moduleText += '<opacity>1.0</opacity>';
+          moduleText += '  <tile>'+"\n";
+          moduleText += '   <x>'+Math.round(left*sfz)+'</x>'+"\n";
+          moduleText += '   <y>'+Math.round(top*sfz)+'</y>'+"\n";
+          moduleText += '   <width>'+Math.round(width*sfz)+'</width>'+"\n";
+          moduleText += '   <height>'+Math.round(height*sfz)+'</height>'+"\n";
+          moduleText += '   <opacity>1.0</opacity>'+"\n";
           
           if (json.maps[m].graphics[g].layer=='objects' || isLight){
-            moduleText += '<layer>object</layer>';
+            moduleText += '   <layer>object</layer>'+"\n";
           }
           if (json.maps[m].graphics[g].layer=='gmlayer'){
-            moduleText += '<layer>dm</layer>';
+            moduleText += '   <layer>dm</layer>'+"\n";
           }
           /*
           if (isLight){
@@ -215,23 +220,23 @@ function onReaderLoad(event){
             moduleText += '<layer>dm</layer>';
           }*/
           
-          moduleText += '<locked>YES</locked>';
-          moduleText += '<asset>';
+          moduleText += '   <locked>YES</locked>'+"\n";
+          moduleText += '   <asset>';
             moduleText += '<name>'+encodeXML(title)+'</name>';
             moduleText += '<type>image</type>';
             moduleText += '<resource>'+encodeXML(id)+'.'+getExtn(tileSrc)+'</resource>';
-          moduleText += '</asset>';
+          moduleText += '</asset>'+"\n";
           if (hasLight){
-            moduleText += '<light>';
+            moduleText += '   <light>';
               moduleText += '<enabled>YES</enabled>';
               moduleText += '<radiusMin>'+Math.round(json.maps[m].graphics[g].light_dimradius)+'</radiusMin>';
               moduleText += '<radiusMax>'+Math.round(json.maps[m].graphics[g].light_radius)+'</radiusMax>';
               moduleText += '<alwaysVisible>NO</alwaysVisible>';
               moduleText += '<color>#ffffff</color>';
               moduleText += '<opacity>0.5</opacity>';
-            moduleText += '</light>';
+            moduleText += '</light>'+"\n";
           }
-          moduleText += '</tile>';
+          moduleText += '  </tile>'+"\n";
         }
       } else {
         //console.log(g+' '+json.maps[m].graphics[g].layer);
@@ -291,7 +296,7 @@ function onReaderLoad(event){
       mapDiv.innerHTML+=svgXML;
     }
     
-    moduleText += '</map>';
+    moduleText += ' </map>'+"\n";
     module.value+=moduleText;
   }
   
@@ -317,13 +322,13 @@ function onReaderLoad(event){
     
   for (var key in groups){
     if (groups[key].parent==''){
-      moduleText += '<group id="'+groups[key].id+'">';
+      moduleText += ' <group id="'+groups[key].id+'">'+"\n";
     } else {
-      moduleText += '<group id="'+groups[key].id+'" parent="'+groups[groups[key].parent].id+'">';
+      moduleText += ' <group id="'+groups[key].id+'" parent="'+groups[groups[key].parent].id+'">'+"\n";
     }
-    moduleText += '<name>'+encodeXML(key)+'</name>';
-    moduleText += '<slug>'+encodeXML(key.toLowerCase().replace(/ /g,'-'))+'</slug>';
-    moduleText += '</group>'+"\n";   
+    moduleText += '  <name>'+encodeXML(key)+'</name>'+"\n";
+    moduleText += '  <slug>'+encodeXML(key.toLowerCase().replace(/ /g,'-'))+'</slug>'+"\n";
+    moduleText += ' </group>'+"\n";   
   }
   
   //Handouts
@@ -331,8 +336,8 @@ function onReaderLoad(event){
     var pageId = json.handouts[h].attributes.id;
     var pageName = json.handouts[h].attributes.name;
     var avatar = json.handouts[h].attributes.avatar;
-    var blobNotes = unescape(json.handouts[h].blobNotes);
-    var blobGmNotes = unescape(json.handouts[h].blobGmNotes);
+    var blobNotes = unescapeBlob(json.handouts[h].blobNotes);
+    var blobGmNotes = unescapeBlob(json.handouts[h].blobGmNotes);
     if (blobGmNotes!=''){
       if (blobNotes!=''){
         blobNotes+='<hr/>';
@@ -349,11 +354,11 @@ function onReaderLoad(event){
       }
     }
     
-    moduleText += '<page parent="'+groups[parentKey].id+'">'; 
-    moduleText += '<name>'+encodeXML(pageName)+'</name>';
-    moduleText += '<slug>'+encodeXML(pageName.toLowerCase().replace(/ /g,'-'))+'</slug>';
-    moduleText += '<content>'+encodeXML(blobNotes)+'</content>';
-    moduleText += '</page>';
+    moduleText += ' <page parent="'+groups[parentKey].id+'">'+"\n";
+    moduleText += '  <name>'+encodeXML(pageName)+'</name>'+"\n";
+    moduleText += '  <slug>'+encodeXML(pageName.toLowerCase().replace(/ /g,'-'))+'</slug>'+"\n";
+    moduleText += '  <content sourceId="h'+h+'">'+encodeXML(blobNotes)+'</content>'+"\n";
+    moduleText += ' </page>'+"\n";
   }
   
   //Characters
@@ -361,8 +366,8 @@ function onReaderLoad(event){
     var charId = json.characters[c].attributes.id;
     var charName = json.characters[c].attributes.name;
     var avatar = json.characters[c].attributes.avatar;
-    var blobBio = unescape(json.characters[c].blobBio);
-    var blobGmNotes = unescape(json.characters[c].blobGmNotes);
+    var blobBio = unescapeBlob(json.characters[c].blobBio);
+    var blobGmNotes = unescapeBlob(json.characters[c].blobGmNotes);
     if (blobGmNotes!=''){
       if (blobBio!=''){
         blobBio+='<hr/>';
@@ -379,11 +384,11 @@ function onReaderLoad(event){
       }
     }
     
-    moduleText += '<page parent="'+groups[parentKey].id+'">'; 
-    moduleText += '<name>'+encodeXML(charName)+'</name>';
-    moduleText += '<slug>'+encodeXML(charName.toLowerCase().replace(/ /g,'-'))+'</slug>';
-    moduleText += '<content>'+encodeXML(blobBio)+'</content>';
-    moduleText += '</page>';
+    moduleText += ' <page parent="'+groups[parentKey].id+'">'+"\n"; 
+    moduleText += '  <name>'+encodeXML(charName)+'</name>'+"\n";
+    moduleText += '  <slug>'+encodeXML(charName.toLowerCase().replace(/ /g,'-'))+'</slug>'+"\n";
+    moduleText += '  <content sourceId="c'+c+'">'+encodeXML(blobBio)+'</content>'+"\n";
+    moduleText += ' </page>'+"\n";
   }
   
   module.value+=moduleText;
@@ -453,7 +458,7 @@ function downloadModule(){
   var zipName = fileName.replace(/.json/,'')+'.module';
   var zip = new JSZip();
   var module = document.getElementById('module');
-  zip.file('module.xml', '<?xml version="1.0" encoding="utf-8" standalone="no"?><module>'+module.value+'</module>');
+  zip.file('module.xml', '<?xml version="1.0" encoding="utf-8" standalone="no"?>'+"\n"+'<module>'+"\n"+module.value+'</module>');
 
   var mapWrappers = document.getElementsByClassName('mapWrapper');
   for (var mw=0;mw<mapWrappers.length;mw++){
