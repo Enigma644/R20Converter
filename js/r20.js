@@ -171,7 +171,11 @@ function onReaderLoad(event){
     //Graphic Objects
     if (!debugSkipTiles){
       for (var g=0;g<json.maps[m].graphics.length;g++){
-        if (json.maps[m].graphics[g].layer=='objects' || json.maps[m].graphics[g].layer=='gmlayer' || json.maps[m].graphics[g].layer=='walls'){
+        var layer = json.maps[m].graphics[g].layer;
+        if (layer=='map' && g!=mapG){
+          layer='objects';
+        } 
+        if (layer=='objects' || layer=='gmlayer' || layer=='walls'){
           var left = json.maps[m].graphics[g].left+mapOffsetX;
           var top = json.maps[m].graphics[g].top+mapOffsetY; 
           var width = json.maps[m].graphics[g].width;
@@ -211,9 +215,9 @@ function onReaderLoad(event){
             if (hasLight){
               cssClass += ' light';
             }
-            if (json.maps[m].graphics[g].layer=='objects' || isLight ){
+            if (layer=='objects' || isLight ){
               cssClass += ' layer-objects';
-            } else if (json.maps[m].graphics[g].layer=='gmlayer'){
+            } else if (layer=='gmlayer'){
               cssClass += ' layer-dm';
             } else {
               cssClass += ' layer-misc';           
