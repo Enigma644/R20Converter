@@ -105,7 +105,8 @@ function onReaderLoad(event){
 
     //Map layer meta
     mapWidth =0.0;
-    var mapG=-0;   
+    var mapG=-0;
+    var mapClass='';
     for (var g=0;g<json.maps[m].graphics.length;g++){
       if (json.maps[m].graphics[g].layer=='map'){
         var tempWidth = json.maps[m].graphics[g].width;
@@ -116,6 +117,9 @@ function onReaderLoad(event){
           mapOffsetX = (json.maps[m].graphics[g].width/2.0)-json.maps[m].graphics[g].left;
           mapOffsetY = (json.maps[m].graphics[g].height/2.0)-json.maps[m].graphics[g].top;
           mapG = g;
+          if (json.maps[m].graphics[g].rotation=='180'){
+            mapClass+=' rotate180';
+          }
         } 
       } 
     }
@@ -123,9 +127,9 @@ function onReaderLoad(event){
     console.log('--------------------------');
     console.log('Map [m:'+m+',g:'+mapG+'] - ' + mapName);
     
-    if (mapOffsetX!=0 || mapOffsetY!=0){
+    /*if (mapOffsetX!=0 || mapOffsetY!=0){
       console.log('%cOffset '+ mapOffsetX + ' x '+mapOffsetY,'background:#ff06');
-    }
+    }*/
           
     if (mapWidth>maxDisplayWidth){
       sfd=maxDisplayWidth/mapWidth;
@@ -141,7 +145,7 @@ function onReaderLoad(event){
       sfz=1.0;
     }
     
-    outDiv.innerHTML+='<div class="mapWrapper"><h4>'+mapName+'</h4><div id="map'+m+'" class="map"><img id="bgmap'+m+'" style="max-width:'+Math.round(mapWidth)+'px;max-height:'+Math.round(mapHeight)+'px;" class="background" alt="'+mapName+'" crossorigin="anonymous" src="'+mapImageSrc+'" width="'+Math.round(mapWidth*sfd)+'px" height="'+Math.round(mapHeight*sfd)+'px"/></div></div>';
+    outDiv.innerHTML+='<div class="mapWrapper"><h4>'+mapName+'</h4><div id="map'+m+'" class="map"><img id="bgmap'+m+'" style="max-width:'+Math.round(mapWidth)+'px;max-height:'+Math.round(mapHeight)+'px;" class="background'+mapClass+'" alt="'+mapName+'" crossorigin="anonymous" src="'+mapImageSrc+'" width="'+Math.round(mapWidth*sfd)+'px" height="'+Math.round(mapHeight*sfd)+'px"/></div></div>';
     var mapDiv = document.getElementById('map'+m);      
 
     var moduleText = ' <map>'+"\n";
@@ -305,9 +309,28 @@ function onReaderLoad(event){
         var jsonPath = JSON.parse(json.maps[m].paths[p].path);
         var path = '';
         for (var i=0;i<jsonPath.length;i++){
-          path += ''+jsonPath[i][0];
-          path += ''+(jsonPath[i][1]+pLeft+mapOffsetX-pWidth/2)*sfz;
-          path += ','+(jsonPath[i][2]+pTop+mapOffsetY-pHeight/2)*sfz;
+          var letter = jsonPath[i][0];
+          if (letter=='M' || letter=='L'){ //Lines
+            path += letter;
+            path += ''+(jsonPath[i][1]+pLeft+mapOffsetX-pWidth/2)*sfz;
+            path += ','+(jsonPath[i][2]+pTop+mapOffsetY-pHeight/2)*sfz;
+          } else if (letter=='C'){ //Oval path
+            path += letter;
+            path += ''+(jsonPath[i][1]+pLeft+mapOffsetX-pWidth/2)*sfz;
+            path += ','+(jsonPath[i][2]+pTop+mapOffsetY-pHeight/2)*sfz;
+            path += ','+(jsonPath[i][3]+pLeft+mapOffsetX-pWidth/2)*sfz;
+            path += ','+(jsonPath[i][4]+pTop+mapOffsetY-pHeight/2)*sfz;
+            path += ','+(jsonPath[i][5]+pLeft+mapOffsetX-pWidth/2)*sfz;
+            path += ','+(jsonPath[i][6]+pTop+mapOffsetY-pHeight/2)*sfz;          
+          } else if (letter=='Q'){ //Freehand path (UNTESTED!)
+            path += letter;
+            path += ''+(jsonPath[i][1]+pLeft+mapOffsetX-pWidth/2)*sfz;
+            path += ','+(jsonPath[i][2]+pTop+mapOffsetY-pHeight/2)*sfz;
+            path += ','+(jsonPath[i][3]+pLeft+mapOffsetX-pWidth/2)*sfz;
+            path += ','+(jsonPath[i][4]+pTop+mapOffsetY-pHeight/2)*sfz;
+          } else {
+            console.log('%cUnknown SVG Letter! '+letter+' in paths['+p+'].path['+i+']','background:#ff06');
+          }
         }
         svgXML+='<path class="'+pClass+'" stroke="'+pStroke+'" stroke-opacity="1.0" stroke-width="'+pStrokeWidth+'" stroke-linejoin="round" stroke-linecap="round" fill="none" d="'+path+'" />';
       }
@@ -460,7 +483,6 @@ function urlToPromise(url) {
   });
 }
 
-
 function downloadModule(){
   console.log('Download');
   
@@ -497,8 +519,9 @@ function downloadModule(){
       resizeNeededFromJson=true;
       console.log('json/image size mismatch - resize needed: '+mapImage.alt);
     }
+    var rotate180Needed = (mapImage.className.indexOf('rotate180')!=-1)
 
-    if (resizeNeededFromJson || mapImage.naturalWidth>maxZipWidth || mapImage.naturalHeight>maxZipHeight){
+    if (rotate180Needed || resizeNeededFromJson || mapImage.naturalWidth>maxZipWidth || mapImage.naturalHeight>maxZipHeight){
       var mapWidth=mapImage.naturalWidth;
       var mapHeight=mapImage.naturalHeight;
       if (resizeNeededFromJson){
@@ -516,7 +539,7 @@ function downloadModule(){
       //Need to update module to force png extension.
       module.value = module.value.replace('  <image>'+mapName+'.'+mapImageExtension+'</image>'+"\n",'  <image>'+mapName+'.png</image>'+"\n");
 
-      var mapData = getData(mapImage,mapWidth*sfz,mapHeight*sfz);
+      var mapData = getData(mapImage,mapWidth*sfz,mapHeight*sfz,rotate180Needed?Math.PI:0);
       zip.file(mapName+'.png', mapData, {base64: true});
     } else {
       zip.file(mapName+'.'+mapImageExtension, urlToPromise(mapImage.src), {binary:true});
@@ -543,12 +566,16 @@ function downloadModule(){
   });
 }
 
-function getData(img,width,height) {
+function getData(img,width,height,rotationRads) {
   var canvas = document.createElement('canvas')
   var ctx = canvas.getContext('2d')
   canvas.width = width
   canvas.height = height
-  ctx.drawImage(img, 0, 0, width, height)
+  ctx.translate(width/2, height/2);
+  if (rotationRads!=0){
+    ctx.rotate(rotationRads);
+  }
+  ctx.drawImage(img, -width/2, -height/2, width, height)
   var data = canvas.toDataURL('image/png',1)
   return data.substr(data.indexOf(',')+1);
 }

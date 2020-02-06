@@ -69,6 +69,13 @@
       border:2px solid #f00;
       background-color: #f009;
     }
+    .rotate180 {
+      -webkit-transform:rotate(180deg);
+      -moz-transform: rotate(180deg);
+      -ms-transform: rotate(180deg);
+      -o-transform: rotate(180deg);
+      transform: rotate(180deg);
+    }
   </style>
   <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
   <script type="text/javascript" src="js/jszip.min.js"></script>
