@@ -384,13 +384,15 @@ function onReaderLoad(event){
     var avatar = json.handouts[h].attributes.avatar;
     var blobNotes = unescapeBlob(json.handouts[h].blobNotes);
     var blobGmNotes = unescapeBlob(json.handouts[h].blobGmNotes);
-    var tempNotes = String;
     if (blobGmNotes!=''){
       if (blobNotes!=''){
         blobNotes+='<hr/>';
       }
       blobNotes+=blobGmNotes;
     }
+    
+    blobNotes = fixR20URLs(blobNotes);
+    
     if (avatar!=''){
       blobNotes+='<img src="'+avatar+'"/>';
     }
@@ -404,54 +406,7 @@ function onReaderLoad(event){
     moduleText += ' <page parent="'+groups[parentKey].id+'">'+"\n";
     moduleText += '  <name>'+encodeXML(pageName)+'</name>'+"\n";
     moduleText += '  <slug>'+encodeXML(pageName.toLowerCase().replace(/ /g,'-'))+'</slug>'+"\n";
-	tempNotes=blobNotes;
-	matchCharacter = tempNotes.match(/(http:\/\/journal\.roll20\.net\/character\/)(.+?)(?="|&|\))/);
-	while (matchCharacter)
-		{
-		tempNotes=tempNotes.replace(/(http:\/\/journal\.roll20\.net\/character\/)(.+?)(?="|&|\))/, function (x, y, z) {
-			for (var d=0;d<json.characters.length;d++){
-				if (json.characters[d].attributes.id)
-				{
-				if (json.characters[d].attributes.id == z) {
-					//console.log(json.characters[d].attributes.name)
-					return "/monster/" + json.characters[d].attributes.name.toLowerCase().replace(/ /g,'-')
-					}
-					}
-					else
-					{
-					return ""
-					}
-				}
-			});
-		matchCharacter = tempNotes.match(/(http:\/\/journal\.roll20\.net\/character\/)(.+?)(?="|&|\))/);
-		}
-	matchCharacter = tempNotes.match(/(http:\/\/journal\.roll20\.net\/handout\/)(.+?)(?="|&|\))/)
-	while (matchCharacter)
-		{
-		tempNotes=tempNotes.replace(/(http:\/\/journal\.roll20\.net\/handout\/)(.+?)(?="|&|\))/, function (x, y, z, a) {
-			for (var d=0;d<json.handouts.length;d++){
-				if (json.handouts[d].attributes.id){
-					if (json.handouts[d].attributes.id == z) {
-						//console.log(json.handouts[d].attributes.name)
-						return "/page/" + json.handouts[d].attributes.name.toLowerCase().replace(/ /g,'-')
-						}
-					}
-					else
-					{
-						return ""
-					}
-				}
-			});
-		matchCharacter = tempNotes.match(/(http:\/\/journal\.roll20\.net\/handout\/)(.+?)(?="|&|\))/);
-		}
-	tempNotes=tempNotes.replace(/#content/g, "")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\/Items:/gm, "/item/")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/monstermanual\/Monsters:/gm, "/monster/")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\/Spells:/gm, "/spell/")
-		.replace(/https:\/\/roll20\.net\/compendium\/dnd5e\/Spells:/gm, "/spell/")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\//gm, "/monster/")
-		.replace(/https:\/\/roll20\.net\/compendium\/dnd5e\//gm, "/monster/");
-    moduleText += '  <content sourceId="h'+h+'">'+encodeXML(tempNotes)+'</content>'+"\n";
+    moduleText += '  <content sourceId="h'+h+'">'+encodeXML(blobNotes)+'</content>'+"\n";
     moduleText += ' </page>'+"\n";
   }
   
@@ -468,6 +423,9 @@ function onReaderLoad(event){
       }
       blobBio+=blobGmNotes;
     }
+    
+    blobBio = fixR20URLs(blobBio);
+    
     if (avatar!=''){
       blobBio+='<img src="'+avatar+'"/>';
     }
@@ -481,53 +439,7 @@ function onReaderLoad(event){
     moduleText += ' <page parent="'+groups[parentKey].id+'">'+"\n"; 
     moduleText += '  <name>'+encodeXML(charName)+'</name>'+"\n";
     moduleText += '  <slug>'+encodeXML(charName.toLowerCase().replace(/ /g,'-'))+'</slug>'+"\n";
-	tempNotes=blobBio;
-	matchCharacter = tempNotes.match(/(http:\/\/journal\.roll20\.net\/character\/)(.+?)(?="|&|\))/)
-	while (matchCharacter)
-		{
-		tempNotes=tempNotes.replace(/(http:\/\/journal\.roll20\.net\/character\/)(.+?)(?="|&|\))/, function (x, y, z) {
-			for (var d=0;d<json.characters.length;d++){
-				if (json.characters[d].attributes.id){
-					if (json.characters[d].attributes.id == z) {
-						//console.log(json.characters[d].attributes.name)
-						return "/monster/" + json.characters[d].attributes.name.toLowerCase().replace(/ /g,'-')
-						}
-					}
-					else
-					{
-						return ""
-					}
-				}
-			});
-		matchCharacter = tempNotes.match(/(http:\/\/journal\.roll20\.net\/character\/)(.+?)(?="|&|\))/);
-		}
-	matchCharacter = tempNotes.match(/(http:\/\/journal\.roll20\.net\/handout\/)(.+?)(?="|&|\))/)
-	while (matchCharacter)
-		{
-		tempNotes=tempNotes.replace(/(http:\/\/journal\.roll20\.net\/handout\/)(.+?)(?="|&|\))/, function (x, y, z) {
-			for (var d=0;d<json.handouts.length;d++){
-				if (json.handouts[d].attributes.id){
-					if (json.handouts[d].attributes.id == z) {
-						//console.log(json.handouts[d].attributes.name)
-						return "/page/" + json.handouts[d].attributes.name.toLowerCase().replace(/ /g,'-')
-						}
-					}
-					else
-					{
-						return ""
-					}
-				}
-			});
-		matchCharacter = tempNotes.match(/(http:\/\/journal\.roll20\.net\/handout\/)(.+?)(?="|&|\))/);
-		}
-	tempNotes=tempNotes.replace(/#content/g, "")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\/Items:/gm, "/item/")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/monstermanual\/Monsters:/g, "/monster/")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\/Spells:/gm, "/spell/")
-		.replace(/https:\/\/roll20\.net\/compendium\/dnd5e\/Spells:/gm, "/spell/")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\//gm, "/monster/")
-		.replace(/https:\/\/roll20\.net\/compendium\/dnd5e\//gm, "/monster/");
-    moduleText += '  <content sourceId="c'+c+'">'+encodeXML(tempNotes)+'</content>'+"\n";
+    moduleText += '  <content sourceId="c'+c+'">'+encodeXML(blobBio)+'</content>'+"\n";
     moduleText += ' </page>'+"\n";
   }
   
@@ -549,6 +461,47 @@ function onReaderLoad(event){
       image.addEventListener('error', imageError, false);
     }
   });
+}
+
+function fixR20URLs(blobString){
+  var matchPattern = /(http:\/\/journal\.roll20\.net\/)(character|handout)(\/)(.+?)(?="|&|\))/; 
+  var matchR20URL = blobString.match(matchPattern);
+
+	while (matchR20URL) {
+    blobString=blobString.replace(matchPattern,
+      function (fullMatch, urlPrefix, linkType, bracket, id) {
+        var searchArray;
+        var replacePrefix = '';
+        if (linkType=='character'){
+          searchArray = json.characters;
+          replacePrefix = '/monster/';
+        }
+        if (linkType=='handout'){
+          searchArray = json.handouts;
+          replacePrefix = '/page/';
+        }
+        for (var d=0;d<searchArray.length;d++) {
+          if (searchArray[d].attributes.id) {
+            if (searchArray[d].attributes.id == id) {
+              return replacePrefix + searchArray[d].attributes.name.toLowerCase().replace(/ /gm,'-')
+            }
+          } else {
+            console.log('%cNo url id Match for '+linkType +' - '+id,'background:#ff06');
+            return ""
+          }
+        }
+      });
+		matchR20URL = blobString.match(matchPattern);
+  }
+  
+	blobString=blobString.replace(/#content/gm, "")
+		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\/Items:/gm, "/item/")
+		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/monstermanual\/Monsters:/gm, "/monster/")
+		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\/Spells:/gm, "/spell/")
+		.replace(/https:\/\/roll20\.net\/compendium\/dnd5e\/Spells:/gm, "/spell/")
+		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\//gm, "/monster/")
+		.replace(/https:\/\/roll20\.net\/compendium\/dnd5e\//gm, "/monster/");
+  return blobString;  
 }
 
 function imageError(){
