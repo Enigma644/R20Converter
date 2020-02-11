@@ -445,12 +445,12 @@ function onReaderLoad(event){
 		matchCharacter = tempNotes.match(/(http:\/\/journal\.roll20\.net\/handout\/)(.+?)(?="|&|\))/);
 		}
 	tempNotes=tempNotes.replace(/#content/g, "")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\/Items:/g, "/item/")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/monstermanual\/Monsters:/g, "/monster/")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\/Spells:/g, "/spell/")
-		.replace(/https:\/\/roll20\.net\/compendium\/dnd5e\/Spells:/g, "/spell/")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\//g, "/monster/")
-		.replace(/https:\/\/roll20\.net\/compendium\/dnd5e\//g, "/monster/");
+		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\/Items:/gm, "/item/")
+		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/monstermanual\/Monsters:/gm, "/monster/")
+		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\/Spells:/gm, "/spell/")
+		.replace(/https:\/\/roll20\.net\/compendium\/dnd5e\/Spells:/gm, "/spell/")
+		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\//gm, "/monster/")
+		.replace(/https:\/\/roll20\.net\/compendium\/dnd5e\//gm, "/monster/");
     moduleText += '  <content sourceId="h'+h+'">'+encodeXML(tempNotes)+'</content>'+"\n";
     moduleText += ' </page>'+"\n";
   }
@@ -521,12 +521,12 @@ function onReaderLoad(event){
 		matchCharacter = tempNotes.match(/(http:\/\/journal\.roll20\.net\/handout\/)(.+?)(?="|&|\))/);
 		}
 	tempNotes=tempNotes.replace(/#content/g, "")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\/Items:/g, "/item/")
+		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\/Items:/gm, "/item/")
 		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/monstermanual\/Monsters:/g, "/monster/")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\/Spells:/g, "/spell/")
-		.replace(/https:\/\/roll20\.net\/compendium\/dnd5e\/Spells:/g, "/spell/")
-		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\//g, "/monster/")
-		.replace(/https:\/\/roll20\.net\/compendium\/dnd5e\//g, "/monster/");
+		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\/Spells:/gm, "/spell/")
+		.replace(/https:\/\/roll20\.net\/compendium\/dnd5e\/Spells:/gm, "/spell/")
+		.replace(/https:\/\/(app|journal)\.roll20\.net\/compendium\/dnd5e\//gm, "/monster/")
+		.replace(/https:\/\/roll20\.net\/compendium\/dnd5e\//gm, "/monster/");
     moduleText += '  <content sourceId="c'+c+'">'+encodeXML(tempNotes)+'</content>'+"\n";
     moduleText += ' </page>'+"\n";
   }
