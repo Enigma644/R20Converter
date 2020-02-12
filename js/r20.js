@@ -483,7 +483,7 @@ function fixR20URLs(blobString){
         for (var d=0;d<searchArray.length;d++) {
           if (searchArray[d].attributes.id) {
             if (searchArray[d].attributes.id == id) {
-              return replacePrefix + searchArray[d].attributes.name.toLowerCase().replace(/ /gm,'-')
+              return 'https://encounter.plus' + replacePrefix + searchArray[d].attributes.name.toLowerCase().replace(/ /gm,'-')
             }
           } else {
             console.log('%cNo url id Match for '+linkType +' - '+id,'background:#ff06');
